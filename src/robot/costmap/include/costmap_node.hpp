@@ -17,6 +17,8 @@ class CostmapNode : public rclcpp::Node {
     void initializeCostmap();
     void convertToGrid(double range, double angle, int &x_grid, int &y_grid);
     void markObstacle(int x_grid, int y_grid);
+    void markFree(int x_grid, int y_grid);
+    void raytraceFree(double range, double angle);
     void inflateObstacles();
     void publishCostmap();
 
