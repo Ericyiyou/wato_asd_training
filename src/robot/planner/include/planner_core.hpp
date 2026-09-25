@@ -31,7 +31,7 @@ class PlannerCore {
     bool isBlocked(const nav_msgs::msg::OccupancyGrid& map, int gx, int gy) const;
 
     rclcpp::Logger logger_;
-    int obstacle_threshold_ = 50;
+    int obstacle_threshold_ = 25;
     double cost_weight_ = 1.0;
 };
 

@@ -10,7 +10,7 @@ PlannerNode::PlannerNode() : Node("planner"), planner_(robot::PlannerCore(this->
   // Parameters
   goal_tolerance_ = this->declare_parameter<double>("goal_tolerance", 0.5);
   goal_timeout_ = this->declare_parameter<double>("goal_timeout", 60.0);
-  int obstacle_threshold = this->declare_parameter<int>("obstacle_threshold", 50);
+  int obstacle_threshold = this->declare_parameter<int>("obstacle_threshold", 25);
   double cost_weight = this->declare_parameter<double>("cost_weight", 1.0);
   planner_.setParameters(obstacle_threshold, cost_weight);
   no_progress_timeout_ = this->declare_parameter<double>("no_progress_timeout", 10.0);
