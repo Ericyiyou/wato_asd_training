@@ -30,8 +30,14 @@ void ControlNode::controlLoop() //Edge cases
 {
   if (!current_path_ || !robot_odom_) {
     return;
+  }
 
+  // Empty path (planner cleared it) or goal reached: stop once, then forget the path.
+  // The sim keeps executing the last /cmd_vel, so an explicit stop is required.
+  // Clearing the path means we don't keep publishing zeros (which would block teleop).
   if (current_path_->poses.empty()) {
+    cmd_vel_pub_->publish(geometry_msgs::msg::Twist());
+    current_path_.reset();
     return;
   }
 
@@ -40,18 +46,9 @@ void ControlNode::controlLoop() //Edge cases
   double distance_to_goal = computeDistance(robot_position, goal_position);
 
   if (distance_to_goal < goal_tolerance_) {
-    geometry_msgs::msg::Twist stop_cmd;  
-    cmd_vel_pub_->publish(stop_cmd);
+    cmd_vel_pub_->publish(geometry_msgs::msg::Twist());
+    current_path_.reset();
     return;
-  }
-
-  auto lookahead_point = findLookaheadPoint();
-  if (!lookahead_point) {
-    return;
-  }
-
-  auto cmd_vel = computeVelocity(*lookahead_point);
-  cmd_vel_pub_->publish(cmd_vel);
   }
 
   auto lookahead_point = findLookaheadPoint();

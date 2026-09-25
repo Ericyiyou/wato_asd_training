@@ -1,3 +1,4 @@
-# planner_node:
-#   ros__parameters:
-    
+planner_node:
+  ros__parameters:
+    goal_tolerance: 0.5   # m: how close counts as "reached"
+    goal_timeout: 60.0    # s: give up on a goal after this long
