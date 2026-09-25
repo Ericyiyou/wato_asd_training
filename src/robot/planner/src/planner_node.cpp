@@ -1,4 +1,5 @@
 #include <chrono>
+#include <algorithm>
 #include <cmath>
 #include <memory>
 
@@ -43,7 +44,7 @@ void PlannerNode::goalCallback(const geometry_msgs::msg::PointStamped::SharedPtr
   RCLCPP_INFO(this->get_logger(), "New goal (%.2f, %.2f), %.2f m away. State: WAITING_FOR_ROBOT_TO_REACH_GOAL",
     goal_.point.x, goal_.point.y, distanceToGoal());
 
-  // (Step 4: plan and publish a path here)
+  planAndPublish();
 }
 
 void PlannerNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -79,6 +80,37 @@ void PlannerNode::timerCallback() {
     "Driving to goal: %.2f m left, %.0f s elapsed", distance, elapsed);
 
   // (Step 6: replan here if the map updated or the robot isn't making progress)
+}
+
+// Plan from the robot to the goal and publish it.
+// Step 4: straight line (placeholder). Step 5 replaces the waypoint generation with A*.
+void PlannerNode::planAndPublish() {
+  if (!have_odom_) {
+    RCLCPP_WARN(this->get_logger(), "No odometry yet, can't plan");
+    return;
+  }
+
+  nav_msgs::msg::Path path;
+  path.header.stamp = this->now();
+  path.header.frame_id = "sim_world";
+
+  // Waypoints every ~0.1 m along the line (same spacing as the map cells)
+  const double step = 0.1;
+  double distance = distanceToGoal();
+  int num_steps = std::max(1, static_cast<int>(std::ceil(distance / step)));
+
+  for (int i = 0; i <= num_steps; ++i) {
+    double t = static_cast<double>(i) / num_steps;
+    geometry_msgs::msg::PoseStamped pose;
+    pose.header = path.header;
+    pose.pose.position.x = robot_x_ + t * (goal_.point.x - robot_x_);
+    pose.pose.position.y = robot_y_ + t * (goal_.point.y - robot_y_);
+    pose.pose.orientation.w = 1.0;
+    path.poses.push_back(pose);
+  }
+
+  path_pub_->publish(path);
+  RCLCPP_INFO(this->get_logger(), "Published straight-line path with %zu poses", path.poses.size());
 }
 
 // An empty path tells the control node to stop

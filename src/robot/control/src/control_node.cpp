@@ -66,15 +66,28 @@ std::optional<geometry_msgs::msg::PoseStamped> ControlNode::findLookaheadPoint()
   }
 
   const auto &robot_position = robot_odom_->pose.pose.position;
+  const auto &poses = current_path_->poses;
 
-  for (const auto &pose_stamped : current_path_->poses) {
-    double distance = computeDistance(robot_position, pose_stamped.pose.position);
-    if (distance >= lookahead_distance_) {
-      return pose_stamped;
+  // Start searching from the path point closest to the robot, so we never
+  // chase points the robot has already passed (e.g. the start of the path)
+  size_t closest = 0;
+  double closest_distance = computeDistance(robot_position, poses[0].pose.position);
+  for (size_t i = 1; i < poses.size(); ++i) {
+    double distance = computeDistance(robot_position, poses[i].pose.position);
+    if (distance < closest_distance) {
+      closest_distance = distance;
+      closest = i;
     }
   }
 
-  return current_path_->poses.back();
+  for (size_t i = closest; i < poses.size(); ++i) {
+    double distance = computeDistance(robot_position, poses[i].pose.position);
+    if (distance >= lookahead_distance_) {
+      return poses[i];
+    }
+  }
+
+  return poses.back();
 }
 
 double ControlNode::computeDistance(const geometry_msgs::msg::Point &a, const geometry_msgs::msg::Point &b) {
@@ -100,7 +113,19 @@ geometry_msgs::msg::Twist ControlNode::computeVelocity(const geometry_msgs::msg:
   double local_x = dx * std::cos(robot_yaw) + dy * std::sin(robot_yaw);
   double local_y = -dx * std::sin(robot_yaw) + dy * std::cos(robot_yaw);
 
+  // Target far off to the side or behind: pure pursuit would drive away from it,
+  // so rotate in place toward it first
+  double heading_error = std::atan2(local_y, local_x);
+  if (std::abs(heading_error) > M_PI / 4.0) {
+    cmd_vel.linear.x = 0.0;
+    cmd_vel.angular.z = (heading_error > 0.0) ? 1.0 : -1.0;
+    return cmd_vel;
+  }
+
   double distance_to_target = std::hypot(local_x, local_y);
+  if (distance_to_target < 1e-6) {
+    return cmd_vel;  // on top of the target: nothing to steer toward
+  }
   double curvature = (2.0 * local_y) / (distance_to_target * distance_to_target);
 
   cmd_vel.linear.x = linear_speed_;

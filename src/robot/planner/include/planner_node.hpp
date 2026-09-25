@@ -23,6 +23,7 @@ class PlannerNode : public rclcpp::Node {
     void timerCallback();
 
     // Helpers
+    void planAndPublish();
     void publishEmptyPath();
     double distanceToGoal() const;
 
