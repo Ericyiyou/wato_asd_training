@@ -26,7 +26,8 @@ MapMemoryNode::MapMemoryNode() : Node("map_memory"), map_memory_(robot::MapMemor
 }
 
 void MapMemoryNode::costmapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
-  RCLCPP_INFO(this->get_logger(), "Received costmap: %u x %u", msg->info.width, msg->info.height);
+  latest_costmap_ = *msg;
+  costmap_updated_ = true;
 }
 
 void MapMemoryNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -46,19 +47,22 @@ void MapMemoryNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
 }
 
 void MapMemoryNode::updateMap() {
-  if (!should_update_map_) {
+  // Need both: robot moved far enough AND a costmap to merge.
+  // If only the move flag is set, it stays set until a costmap arrives.
+  if (!should_update_map_ || !costmap_updated_) {
     return;
   }
 
   RCLCPP_INFO(this->get_logger(), "Update triggered at (%.2f, %.2f)", last_x_, last_y_);
 
-  // (Step 5: merge the latest costmap here)
+  map_memory_.mergeCostmap(latest_costmap_, robot_x_, robot_y_, robot_yaw_);
 
   auto map = map_memory_.getMap();
   map.header.stamp = this->now();
   map_pub_->publish(map);
 
   should_update_map_ = false;
+  costmap_updated_ = false;
 }
 
 int main(int argc, char ** argv)

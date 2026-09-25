@@ -14,6 +14,9 @@ class MapMemoryCore {
 
     const nav_msgs::msg::OccupancyGrid& getMap() const;
 
+    // Copy known cells from a robot-relative costmap into the global map
+    void mergeCostmap(const nav_msgs::msg::OccupancyGrid& costmap, double robot_x, double robot_y, double robot_yaw);
+
   private:
     rclcpp::Logger logger_;
     nav_msgs::msg::OccupancyGrid global_map_;
