@@ -25,6 +25,7 @@ class PlannerNode : public rclcpp::Node {
     // Helpers
     void planAndPublish();
     void publishEmptyPath();
+    void resetProgress();
     double distanceToGoal() const;
 
     robot::PlannerCore planner_;
@@ -44,6 +45,11 @@ class PlannerNode : public rclcpp::Node {
     // Latest map (used by A* in Step 5)
     nav_msgs::msg::OccupancyGrid current_map_;
     bool have_map_ = false;
+    bool map_updated_ = false;   // set by mapCallback, cleared when the timer replans
+
+    // Progress tracking (replan if the robot stops getting closer)
+    double best_distance_ = 0.0;
+    rclcpp::Time last_progress_time_;
 
     // Robot position
     double robot_x_ = 0.0;
@@ -53,6 +59,8 @@ class PlannerNode : public rclcpp::Node {
     // Parameters
     double goal_tolerance_ = 0.5;   // m
     double goal_timeout_ = 60.0;    // s
+    double no_progress_timeout_ = 10.0;  // s without getting closer before replanning
+    double progress_epsilon_ = 0.2;      // m closer that counts as progress
 };
 
 #endif
