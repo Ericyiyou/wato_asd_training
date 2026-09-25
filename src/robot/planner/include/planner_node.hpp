@@ -58,7 +58,7 @@ class PlannerNode : public rclcpp::Node {
 
     // Parameters
     double goal_tolerance_ = 0.5;   // m
-    double goal_timeout_ = 60.0;    // s
+    double goal_timeout_ = 120.0;   // s
     double no_progress_timeout_ = 10.0;  // s without getting closer before replanning
     double progress_epsilon_ = 0.2;      // m closer that counts as progress
 };

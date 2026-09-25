@@ -1,7 +1,7 @@
 planner_node:
   ros__parameters:
     goal_tolerance: 0.5   # m: how close counts as "reached"
-    goal_timeout: 60.0    # s: give up on a goal after this long
+    goal_timeout: 120.0   # s: give up on a goal after this long (cross-arena trips take ~60 s)
     obstacle_threshold: 25  # cost >= this is blocked; with 1.5 m inflation, 25 keeps paths ~1.1 m from obstacles
     cost_weight: 1.0        # extra cost for driving through inflated cells
     no_progress_timeout: 10.0  # s: replan if the robot hasn't got closer in this long

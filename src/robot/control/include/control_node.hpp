@@ -33,6 +33,7 @@ class ControlNode : public rclcpp::Node {
     double lookahead_distance_;
     double goal_tolerance_;
     double linear_speed_;
+    int turn_direction_ = 0;  // +1 left / -1 right while turning in place, 0 otherwise
 };
 
 #endif

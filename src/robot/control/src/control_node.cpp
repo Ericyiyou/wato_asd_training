@@ -117,10 +117,17 @@ geometry_msgs::msg::Twist ControlNode::computeVelocity(const geometry_msgs::msg:
   // so rotate in place toward it first
   double heading_error = std::atan2(local_y, local_x);
   if (std::abs(heading_error) > M_PI / 4.0) {
+    // Pick a turn direction once and stick to it until we're facing the target.
+    // With the target almost directly behind, the error flips between +180 and -180 deg
+    // on tiny movements; re-deciding every tick makes the robot wiggle in place.
+    if (turn_direction_ == 0) {
+      turn_direction_ = (heading_error > 0.0) ? 1 : -1;
+    }
     cmd_vel.linear.x = 0.0;
-    cmd_vel.angular.z = (heading_error > 0.0) ? 1.0 : -1.0;
+    cmd_vel.angular.z = turn_direction_ * 1.0;
     return cmd_vel;
   }
+  turn_direction_ = 0;  // facing the target: back to normal pursuit
 
   double distance_to_target = std::hypot(local_x, local_y);
   if (distance_to_target < 1e-6) {
